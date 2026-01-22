@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>System Rezerwacji Sal</title>
+    <link rel="stylesheet" href="CSS"
+</head>
+<body>
+    <h1>Zarządzanie Salami</h1>
+    
+    <div id="form-container">
+        <input type="text" id="numer_sali" placeholder="Numer sali (np. A1)">
+        <input type="date" id="data_sali">
+        <button onclick="dodajSale()">Dodaj Salę</button>
+    </div>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Numer</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-sal"></tbody>
+    </table>
+
+    <script src="script.js"></script>
+</body>
+</html>
