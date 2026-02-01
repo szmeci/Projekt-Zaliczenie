@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Rezerwacji Sal</title>
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+
+    <div class="card">
+        <div id="login-section">
+            <h2>Logowanie</h2>
+            <input type="text" id="user" placeholder="Login (nowak)">
+            <input type="password" id="pass" placeholder="Hasło (123)">
+            <button onclick="login()">Zaloguj się</button>
+        </div>
+
+        <div id="app-section" class="hidden">
+            <h2 id="welcome-msg">Witaj!</h2>
+            <hr>
+            <h3>Nowa rezerwacja</h3>
+            <input type="text" id="sala" placeholder="Numer sali">
+            <input type="date" id="data">
+            <input type="time" id="godzina">
+            <button onclick="addReservation()" class="btn-success">Dodaj rezerwację</button>
+            <hr>
+            <h3>Lista rezerwacji</h3>
+            <ul id="res-list"></ul>
+        </div>
+    </div>
+
+    <script src="../static/script.js"></script>
+</body>
+</html>
