@@ -1,6 +1,8 @@
 let currentUser = null;
 const API = "http://127.0.0.1:8000";
 
+document.getElementById('data').min = new Date().toISOString().split("T")[0];
+
 // FUNKCJA DO LOGOWANIA
 async function login() {
     const u = document.getElementById('user').value;
@@ -19,7 +21,7 @@ async function login() {
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('app-section').classList.remove('hidden');
             document.getElementById('welcome-msg').innerText = `Zalogowany jako: ${currentUser.username}`;
-            loadReservations();
+            showSection('main-menu');
         } else {
             alert("jak cos wszedzie jest imie.nazwisko i 123 hasla ok");
         }
@@ -34,8 +36,27 @@ async function addReservation() {
     const data = document.getElementById('data').value;
     const godzina = document.getElementById('godzina').value;
 
+    //sprawdza czy wszystkie pola są wypełnione
     if (!sala || !data || !godzina) {
         alert("Wypełnij wszystkie pola!");
+        return;
+    }
+
+// SPRAWDZANIE DATY I GODZINY
+    const wybranaData = new Date(data);
+    const dzis = new Date();
+    dzis.setHours(0, 0, 0, 0); 
+
+    // sprawdza czy data nie jest w przeszłości
+    if (wybranaData < dzis) {
+        alert("ten dzien juz byl");
+        return;
+    }
+
+    //  sprawdza czy godzina jest w przedziale 7-19
+    const godzinaH = parseInt(godzina.split(":")[0]); 
+    if (godzinaH < 7 || godzinaH >= 19) {
+        alert("mozna rezerwowac sale tylko w godzinach 7-19");
         return;
     }
 
@@ -54,34 +75,27 @@ async function addReservation() {
 
     if (response.ok) {
         alert("Dokonano rezerwacji!");
-        loadReservations(); // Odśwież listę po dodaniu
+        loadUserReservations(); 
     } else {
         const errorData = await response.json();
         alert("uwaga: " + errorData.detail);
     }
 }
 
-// POBIERRANIE I WYŚWIETLANIE REZERWACJI
-async function loadReservations() {
-    const response = await fetch(`${API}/rezerwacje`);
+// FUNKCJA WYPISYWANIA REZERWACJI ZALOGOWANEGO UŻYTKOWNIKA
+async function loadUserReservations() {
+    const response = await fetch(`${API}/moje-rezerwacje/${currentUser.id}`);
     const data = await response.json();
-    const list = document.getElementById('res-list');
+    const list = document.getElementById('res-list-user');
     
     list.innerHTML = data.map(res => 
     `<li>
-        <div style="display: inline-block; width: 80%;">
-            <strong>Sala ${res[1]}</strong><br>
-            Termin: ${res[2]} r. o godz. ${res[3]}<br>
-            <small>Rezerwacja: ${res[4]}</small>
-        </div>
-    <button type="button" onclick="deleteReservation(${res[0]})" 
-            style="width: auto; background: red; color: white; border: none; 
-                   padding: 5px 10px; cursor: pointer; float: right;">
-        X
-    </button>
-    <div style="clear: both;"></div>
+        <strong>Sala ${res.sala}</strong><br>
+        Termin: ${res.data} o godz. ${res.godzina}
+        <button onclick="deleteReservation(${res.id})" style="background:red; color:white; float:right;">X</button>
+        <div style="clear:both;"></div>
     </li>`
-    ).reverse().join(''); // Reverse, żeby najnowsze były na górze
+    ).reverse().join('');
 }
 
 // FUNKCJA USUWANIA REZERWACJI
@@ -90,7 +104,7 @@ async function deleteReservation(id) {
         try {
             const response = await fetch(`${API}/usun/${id}`, { method: 'DELETE' });
             if (response.ok) {
-                loadReservations(); 
+                loadUserReservations(); 
             } else {
                 alert("Serwer zwrócił błąd przy usuwaniu.");
             }
@@ -98,4 +112,70 @@ async function deleteReservation(id) {
             alert("Nie można połączyć się z serwerem!");
         }
     }
+}
+
+// FUNKCJA WYLOGOWANIA
+function logout() {
+    currentUser = null;
+
+    document.getElementById('user').value = "";
+    document.getElementById('pass').value = "";
+
+    document.getElementById('app-section').classList.add('hidden');
+    document.getElementById('login-section').classList.remove('hidden');
+
+    console.log("Użytkownik został wylogowany.");
+}
+
+// FUNKCJA ZARZADZANIA WIDOKIEM SEKCJI
+function showSection(sectionId) {
+    // Ukrywamy wszystkie części panelu aplikacji
+    document.getElementById('main-menu').classList.add('hidden');
+    document.getElementById('check-section').classList.add('hidden');
+    document.getElementById('new-res-section').classList.add('hidden');
+
+    // Pokazujemy tę, którą chcemy
+    document.getElementById(sectionId).classList.remove('hidden');
+
+    // Jeśli wchodzimy w nową rezerwację, odświeżamy listę usera
+    if (sectionId === 'new-res-section') {
+        loadUserReservations();
+    }
+}
+
+// FUNKCJA WYPISYWANIA REZERWACJI ZALOGOWANEGO UŻYTKOWNIKA
+async function loadUserReservations() {
+    const response = await fetch(`${API}/moje-rezerwacje/${currentUser.id}`);
+    const data = await response.json();
+    const list = document.getElementById('res-list-user');
+    
+    list.innerHTML = data.map(res => 
+    `<li>
+        <strong>Sala ${res.sala}</strong><br>
+        Termin: ${res.data} o godz. ${res.godzina}
+        <button onclick="deleteReservation(${res.id})" style="background:red; color:white; float:right;">X</button>
+        <div style="clear:both;"></div>
+    </li>`
+    ).reverse().join('');
+}
+
+// FUNKCJA SPRAWDZANIA REZERWACJI Z FILTREM
+async function loadFilteredReservations() {
+    const sala = document.getElementById('filter-sala').value;
+    const data = document.getElementById('filter-data').value;
+
+    let url = `${API}/sprawdz?`;
+    if (sala) url += `sala=${sala}&`;
+    if (data) url += `data=${data}`;
+
+    const response = await fetch(url);
+    const reservations = await response.json();
+    const list = document.getElementById('res-list-all');
+    
+    list.innerHTML = reservations.map(res => 
+    `<li>
+        <strong>Sala ${res.sala}</strong> | ${res.data} [${res.godzina}]<br>
+        <small>Zarezerwował: ${res.kto}</small>
+    </li>`
+    ).join('');
 }

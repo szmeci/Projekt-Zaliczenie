@@ -7,29 +7,70 @@
     <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
-
     <div class="card">
-        <div id="login-section">
-            <h2>Logowanie</h2>
-            <input type="text" id="user" placeholder="Login (kacper.fedeczko)">
-            <input type="password" id="pass" placeholder="Hasło (123)">
-            <button onclick="login()">Zaloguj się</button>
+        <div id="login-section" class="form-container">
+            <h2>Panel Rezerwacji</h2>
+            <p>Wprowadź dane, aby uzyskać dostęp</p>
+            <input type="text" id="user" placeholder="Nazwa użytkownika">
+            <input type="password" id="pass" placeholder="Hasło">
+            <button onclick="login()" class="btn-main">Zaloguj się</button>
         </div>
 
         <div id="app-section" class="hidden">
-            <h2 id="welcome-msg">Witaj!</h2>
-            <hr>
-            <h3>Nowa rezerwacja</h3>
-            <input type="text" id="sala" placeholder="Numer sali">
-            <input type="date" id="data">
-            <input type="time" id="godzina">
-            <button onclick="addReservation()" class="btn-success">Dodaj rezerwację</button>
-            <hr>
-            <h3>Lista rezerwacji</h3>
-            <ul id="res-list"></ul>
+            <div class="user-bar">
+                <span id="welcome-msg">Witaj!</span>
+                <button onclick="logout()" class="btn-logout">WYLOGUJ</button>
+            </div>
+
+            <div id="main-menu" class="width-100">
+                <div class="menu-grid">
+                    <div class="menu-card check" onclick="showSection('check-section')">
+                        <span style="font-size: 30px; display: block; margin-bottom: 10px;">📅</span>
+                        <span>Sprawdź grafik</span>
+                    </div>
+                    <div class="menu-card add" onclick="showSection('new-res-section')">
+                        <span style="font-size: 30px; display: block; margin-bottom: 10px;">➕</span>
+                        <span>Nowa rezerwacja</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="check-section" class="hidden width-100">
+                <button onclick="showSection('main-menu')" class="btn-back">← WRÓĆ DO MENU</button>
+                <h3 class="section-title">Filtruj rezerwacje</h3>
+                <div class="filter-box">
+                    <select id="filter-sala" onchange="loadFilteredReservations()">
+                        <option value="">Wszystkie sale</option>
+                        <option value="101">Sala 101</option>
+                        <option value="102">Sala 102</option>
+                        <option value="103">Sala 103</option>
+                        <option value="104">Sala 104</option>
+                    </select>
+                    <input type="date" id="filter-data" onchange="loadFilteredReservations()">
+                </div>
+                <ul id="res-list-all" class="custom-list"></ul>
+            </div>
+
+            <div id="new-res-section" class="hidden width-100">
+                <button onclick="showSection('main-menu')" class="btn-back">← WRÓĆ DO MENU</button>
+                <h3 class="section-title">Dodaj rezerwację</h3>
+                <div class="input-group">
+                    <select id="sala">
+                        <option value="">Wybierz salę...</option>
+                        <option value="101">Sala 101</option>
+                        <option value="102">Sala 102</option>
+                        <option value="103">Sala 103</option>
+                        <option value="104">Sala 104</option>
+                    </select>
+                    <input type="date" id="data">
+                    <input type="time" id="godzina">
+                    <button onclick="addReservation()" class="btn-confirm">Zarezerwuj teraz</button>
+                </div>
+                <h4 class="sub-title" style="margin-top: 20px;">Twoja historia</h4>
+                <ul id="res-list-user" class="custom-list"></ul>
+            </div>
         </div>
     </div>
-
     <script src="../static/script.js"></script>
 </body>
 </html>
