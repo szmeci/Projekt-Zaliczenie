@@ -1,7 +1,7 @@
 let currentUser = null;
 const API = "http://127.0.0.1:8000";
 
-// 1. Funkcja logowania
+// FUNKCJA DO LOGOWANIA
 async function login() {
     const u = document.getElementById('user').value;
     const p = document.getElementById('pass').value;
@@ -21,14 +21,14 @@ async function login() {
             document.getElementById('welcome-msg').innerText = `Zalogowany jako: ${currentUser.username}`;
             loadReservations();
         } else {
-            alert("Błędne dane! Spróbuj: nowak / 123");
+            alert("jak cos wszedzie jest imie.nazwisko i 123 hasla ok");
         }
     } catch (error) {
         alert("Błąd: Upewnij się, że serwer FastAPI działa!");
     }
 }
 
-// 2. Dodawanie nowej rezerwacji
+// FUNKCJA DODAWANIA REZERWACJI
 async function addReservation() {
     const sala = document.getElementById('sala').value;
     const data = document.getElementById('data').value;
@@ -53,11 +53,15 @@ async function addReservation() {
     });
 
     if (response.ok) {
+        alert("Dokonano rezerwacji!");
         loadReservations(); // Odśwież listę po dodaniu
+    } else {
+        const errorData = await response.json();
+        alert("uwaga: " + errorData.detail);
     }
 }
 
-// 3. Pobieranie listy rezerwacji z bazy
+// POBIERRANIE I WYŚWIETLANIE REZERWACJI
 async function loadReservations() {
     const response = await fetch(`${API}/rezerwacje`);
     const data = await response.json();
@@ -80,6 +84,7 @@ async function loadReservations() {
     ).reverse().join(''); // Reverse, żeby najnowsze były na górze
 }
 
+// FUNKCJA USUWANIA REZERWACJI
 async function deleteReservation(id) {
     if (confirm("Czy na pewno chcesz usunąć tę rezerwację?")) {
         try {
