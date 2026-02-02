@@ -13,12 +13,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Łączenie z plikiem bazy danych
+# LACZE SEI Z SQLITE
 def get_db():
     conn = sqlite3.connect("uczelnia.db")
     return conn
 
-# START: Tworzenie tabel przy uruchomieniu
+# TABELE DO BAZY 
 with get_db() as conn:
     # TUTAJ TABELA DO PROWADZACYCH (ID, USERNAME, PASSWORD)
     conn.execute("CREATE TABLE IF NOT EXISTS prowadzacy (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT)")
@@ -35,7 +35,8 @@ with get_db() as conn:
             ('kacper.fedeczko', '123'),
             ('emil.kaczmarczyk', '123'),
             ('sebastian.ledwon', '123'),
-            ('szmeksik', '123')
+            ('szmeksik', '123'),
+            ('a', 'a')
         ]
     conn.executemany(
             "INSERT OR IGNORE INTO prowadzacy (username, password) VALUES (?, ?)", 
