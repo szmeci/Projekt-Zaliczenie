@@ -174,9 +174,12 @@ async function loadFilteredReservations() {
         const godzinaKonca = date.toTimeString().slice(0, 5);
 
         return `<li>
-            <strong>Sala ${res.sala}</strong> | ${res.data}<br>
-            🕒 ${res.godzina} - ${godzinaKonca} (90 min)<br>
-            <small>Zarezerwował: ${res.kto}</small>
+            <div class="res-info">
+                <strong>Sala ${res.sala}</strong><br>
+                <span> ${res.data}</span><br>
+                <span> ${res.godzina} — ${godzinaKonca} <small>(90 min)</small></span>
+                <hr>
+            </div>
         </li>`;
     }).join('');
 }
