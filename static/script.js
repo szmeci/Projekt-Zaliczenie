@@ -56,7 +56,7 @@ async function addReservation() {
     //  sprawdza czy godzina jest w przedziale 7-19
     const godzinaH = parseInt(godzina.split(":")[0]); 
     if (godzinaH < 7 || godzinaH >= 19) {
-        alert("mozna rezerwowac sale tylko w godzinach 7-19");
+        alert("uczelnia pracuje od 7 do 20:30 (ostatnia rezerwacja o 19:00)");
         return;
     }
 

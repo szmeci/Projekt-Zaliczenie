@@ -4,6 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 import sqlite3
 
+# HASHOWANIE HASŁA 
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+
 app = FastAPI()
 
 # KONFIGURACJA CORS
@@ -19,30 +23,30 @@ def get_db():
     conn = sqlite3.connect("uczelnia.db")
     return conn
 
-# TABELE DO BAZY 
+# TABELE I UŻYTKOWNICY 
 with get_db() as conn:
-    # TUTAJ TABELA DO PROWADZACYCH (ID, USERNAME, PASSWORD)
+    cursor = conn.cursor()
+
+    # tworzenie tabel
     conn.execute("CREATE TABLE IF NOT EXISTS prowadzacy (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT)")
+    conn.execute("CREATE TABLE IF NOT EXISTS rezerwacje (id INTEGER PRIMARY KEY AUTOINCREMENT, sala TEXT, data TEXT, godzina TEXT, prowadzacy_id INTEGER, FOREIGN KEY(prowadzacy_id) REFERENCES prowadzacy(id))")
     
-    # TUTAJ TABELA DO REZERWACJI (ID, SALA, DATA, GODZINA, PROWADZACY_ID)
-    conn.execute("""CREATE TABLE IF NOT EXISTS rezerwacje (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                    sala TEXT, data TEXT, godzina TEXT, 
-                    prowadzacy_id INTEGER, 
-                    FOREIGN KEY(prowadzacy_id) REFERENCES prowadzacy(id))""")
-    
-    # DODAWANIE UZYTKOWNIKOW PRZYKLADOWYCH 
-    uzytkownicy = [
-            ('kacper.fedeczko', '123'),
-            ('emil.kaczmarczyk', '123'),
-            ('sebastian.ledwon', '123'),
-            ('szmeksik', '123'),
-            ('a', 'a')
-        ]
-    conn.executemany(
-            "INSERT OR IGNORE INTO prowadzacy (username, password) VALUES (?, ?)", 
-            uzytkownicy
-        )
+    # tworzenie kont
+    konta = {
+        'kacper.fedeczko': '123',
+        'emil.kaczmarczyk': '123',
+        'sebastian.ledwon': '123',
+        'szmeksik': '123',
+        'a': 'a'
+    }
+
+    # sprawdzamnie czy konto istnieje, jeśli nie to stworzenie
+    for user, pw in konta.items():
+        cursor.execute("SELECT 1 FROM prowadzacy WHERE username = ?", (user,))
+        if not cursor.fetchone():
+            conn.execute("INSERT INTO prowadzacy (username, password) VALUES (?, ?)", (user, pwd_context.hash(pw)))
+            print(f" Utworzono konto: {user}")
+
     conn.commit()
     
 # modele danych, co zbieraja co przesyłamy z javaScript postem 
@@ -61,10 +65,13 @@ class ResData(BaseModel):
 def login(data: LoginData):
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id FROM prowadzacy WHERE username=? AND password=?", (data.username, data.password))
+        cursor.execute("SELECT id, password FROM prowadzacy WHERE username=?", (data.username,))
         user = cursor.fetchone()
+
         if user:
-            return {"id": user[0], "username": data.username}
+            user_id, hashed_password = user
+            if pwd_context.verify(data.password, hashed_password):
+                return {"id": user_id, "username": data.username}
         raise HTTPException(status_code=401, detail="Błędne dane logowania")
 
 # Dodawanie rezerwacji
