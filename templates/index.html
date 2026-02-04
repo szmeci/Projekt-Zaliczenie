@@ -32,7 +32,32 @@
                         <span style="font-size: 30px; display: block; margin-bottom: 10px;">➕</span>
                         <span>Nowa rezerwacja</span>
                     </div>
+                    <div id="admin-btn" class="menu-card admin hidden" onclick="showSection('admin-section')">
+                        <div class="icon">⚙️</div>
+                        <div class="title">Panel Administratora</div>
+                    </div>
+                    </button>
                 </div>
+            </div>
+
+            <div id="admin-section" class="hidden">
+                <button onclick="showSection('main-menu')" class="btn-back">← Wróć</button>
+                <h2>Zarządzanie userami</h2>
+                <p>Mozna dodac userow albo zmienic im hasla itd</p>
+
+                <div class="admin-form-box">
+                    <input type="text" id="new-user-login" placeholder="Login (imie.nazwisko)">
+                    <input type="password" id="new-user-pass" placeholder="Hasło / Nowe hasło">
+                    
+                    <div class="admin-actions">
+                        <button onclick="adminAddUser()" class="btn-confirm">Dodaj Nowego</button>
+                        <button onclick="adminChangePass()" class="btn-warning">Zmień Hasło</button>
+                    </div>
+                </div>
+
+                <h4>Aktualna lista prowadzących</h4>
+                <ul id="admin-user-list">
+                    </ul>
             </div>
 
             <div id="check-section" class="hidden width-100">

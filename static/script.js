@@ -17,7 +17,13 @@ async function login() {
 
         if (response.ok) {
             currentUser = await response.json();
-            // Przełączanie widoków
+            // sprawdzamy czy user to admin
+            if (currentUser.username === 'admin') {
+                document.getElementById('admin-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('admin-btn').classList.add('hidden');
+            }
+
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('app-section').classList.remove('hidden');
             document.getElementById('welcome-msg').innerText = `Zalogowany jako: ${currentUser.username}`;
@@ -113,17 +119,20 @@ function logout() {
 
 // FUNKCJA ZARZADZANIA WIDOKIEM SEKCJI
 function showSection(sectionId) {
-    // Ukrywamy wszystkie części panelu aplikacji
+
     document.getElementById('main-menu').classList.add('hidden');
     document.getElementById('check-section').classList.add('hidden');
     document.getElementById('new-res-section').classList.add('hidden');
+    document.getElementById('admin-section').classList.add('hidden');
 
-    // Pokazujemy tę, którą chcemy
     document.getElementById(sectionId).classList.remove('hidden');
 
-    // Jeśli wchodzimy w nową rezerwację, odświeżamy listę usera
     if (sectionId === 'new-res-section') {
         loadUserReservations();
+    }
+
+    if (sectionId === 'admin-section') {
+        loadUsersList();
     }
 }
 
@@ -182,4 +191,74 @@ async function loadFilteredReservations() {
             </div>
         </li>`;
     }).join('');
+}
+
+// FUNKCJE ADMINA
+// FUNKCJA DODAWANIA UŻYTKOWNIKA 
+async function adminAddUser() {
+    const u = document.getElementById('new-user-login').value;
+    const p = document.getElementById('new-user-pass').value;
+
+    if (!u || !p) return alert("Wypełnij dane!");
+
+    const response = await fetch(`${API}/dodaj-uzytkownika`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: u, password: p})
+    });
+
+    if (response.ok) {
+        alert("Pomyślnie dodano użytkownika!");
+        document.getElementById('new-user-login').value = "";
+        document.getElementById('new-user-pass').value = "";
+        loadUsersList();
+    } else {
+        const err = await response.json();
+        alert("Błąd: " + err.detail);
+    }
+}
+
+//FUNKCJA WYŚWIETLANIA LISTY UŻYTKOWNIKÓW
+async function loadUsersList() {
+    const response = await fetch(`${API}/uzytkownicy`);
+    const users = await response.json();
+    const list = document.getElementById('admin-user-list');
+    
+    list.innerHTML = users.map(u => `
+        <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #ddd;">
+            <span><strong>${u.username}</strong></span>
+            <button class="btn-delete-user" onclick="adminDeleteUser(${u.id})">Usuń</button>
+        </li>
+    `).join('');
+}
+
+// FUNKCJA ZMIANY HASŁA UŻYTKOWNIKA
+async function adminChangePass() {
+    const u = document.getElementById('new-user-login').value;
+    const p = document.getElementById('new-user-pass').value;
+
+    if (!u || !p) return alert("Wpisz login i nowe hasło!");
+
+    const response = await fetch(`${API}/zmien-haslo`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: u, password: p})
+    });
+
+    if (response.ok) {
+        alert("Hasło zostało zmienione!");
+        document.getElementById('new-user-pass').value = "";
+    } else {
+        alert("Błąd przy zmianie hasła.");
+    }
+}
+
+// FUNKCJA USUWANIA UŻYTKOWNIKA
+async function adminDeleteUser(id) {
+    if (confirm("Czy na pewno chcesz usunąć tego prowadzącego i wszystkie jego rezerwacje?")) {
+        const response = await fetch(`${API}/usun-uzytkownika/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            loadUsersList(); // odświeżamy listę
+        }
+    }
 }

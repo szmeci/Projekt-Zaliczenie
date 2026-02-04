@@ -33,11 +33,7 @@ with get_db() as conn:
     
     # tworzenie kont
     konta = {
-        'kacper.fedeczko': '123',
-        'emil.kaczmarczyk': '123',
-        'sebastian.ledwon': '123',
-        'szmeksik': '123',
-        'a': 'a'
+        'admin': 'admin'
     }
 
     # sprawdzamnie czy konto istnieje, jeśli nie to stworzenie
@@ -144,3 +140,46 @@ def check_res(sala: str = None, data: str = None):
         cursor.execute(query, params)
         rows = cursor.fetchall()
         return [{"sala": r[0], "data": r[1], "godzina": r[2], "kto": r[3]} for r in rows]
+
+
+# (ADMIN)
+# DODAWANIE UŻYTKOWNIKÓW (ADMIN)
+@app.post("/dodaj-uzytkownika")
+def add_user(data: LoginData):
+    with get_db() as conn:
+        cursor = conn.cursor()
+        try:
+            hashed_pw = pwd_context.hash(data.password)
+            cursor.execute("INSERT INTO prowadzacy (username, password) VALUES (?, ?)", 
+                           (data.username, hashed_pw))
+            conn.commit()
+            return {"msg": f"Użytkownik {data.username} dodany!"}
+        except sqlite3.IntegrityError:
+            raise HTTPException(status_code=400, detail="Ten użytkownik już istnieje!")
+        
+# Pobieranie listy wszystkich userow
+@app.get("/uzytkownicy")
+def get_users():
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, username FROM prowadzacy WHERE username != 'admin'")
+        rows = cursor.fetchall()
+        return [{"id": r[0], "username": r[1]} for r in rows]
+
+# Usuwanie użytkownika
+@app.delete("/usun-uzytkownika/{user_id}")
+def delete_user(user_id: int):
+    with get_db() as conn:
+        conn.execute("DELETE FROM prowadzacy WHERE id = ?", (user_id,))
+        conn.execute("DELETE FROM rezerwacje WHERE prowadzacy_id = ?", (user_id,))
+        conn.commit()
+        return {"msg": "Użytkownik usunięty"}
+
+# Zmiana hasła 
+@app.put("/zmien-haslo")
+def change_password(data: LoginData): 
+    with get_db() as conn:
+        hashed_pw = pwd_context.hash(data.password)
+        conn.execute("UPDATE prowadzacy SET password = ? WHERE username = ?", (hashed_pw, data.username))
+        conn.commit()
+        return {"msg": f"Hasło dla {data.username} zmienione"}
