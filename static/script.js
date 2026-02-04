@@ -258,7 +258,7 @@ async function adminDeleteUser(id) {
     if (confirm("Czy na pewno chcesz usunąć tego prowadzącego i wszystkie jego rezerwacje?")) {
         const response = await fetch(`${API}/usun-uzytkownika/${id}`, { method: 'DELETE' });
         if (response.ok) {
-            loadUsersList(); // odświeżamy listę
+            loadUsersList(); 
         }
     }
 }
