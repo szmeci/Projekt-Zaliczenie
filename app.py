@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timedelta
 import sqlite3
 
 app = FastAPI()
@@ -71,13 +72,26 @@ def login(data: LoginData):
 def add_res(res: ResData):
     with get_db() as conn:
         cursor = conn.cursor()
-        query = "SELECT id FROM rezerwacje WHERE sala=? AND data=? AND godzina=?"
-        cursor.execute(query, (res.sala, res.data, res.godzina))
-        istniejaca = cursor.fetchone()
+        
+        # pobieram istniejące rezerwacje dla danej sali i daty
+        cursor.execute("SELECT godzina FROM rezerwacje WHERE sala=? AND data=?", (res.sala, res.data))
+        istniejace_godziny = cursor.fetchall()
 
-    # sprawdzam czy sala jest wolna w tym terminie    
-        if istniejaca:
-            raise HTTPException(status_code=400, detail="Sala jest zajeta w tym terminie")
+        # obliczam czas zakończenia rezerwacji
+        nowy_start = datetime.strptime(res.godzina, "%H:%M")
+        nowy_koniec = nowy_start + timedelta(minutes=90)
+
+        # sprawdzam czy nowa rezerwacja koliduje z istniejącymi
+        for (godz,) in istniejace_godziny:
+            stary_start = datetime.strptime(godz, "%H:%M")
+            stary_koniec = stary_start + timedelta(minutes=90)
+
+            if nowy_start < stary_koniec and nowy_koniec > stary_start:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Sala zajęta. Kolizja z rezerwacją o godz. {godz} (trwa do {(stary_start + timedelta(minutes=90)).strftime('%H:%M')})"
+                )
+
         conn.execute(
             "INSERT INTO rezerwacje (sala, data, godzina, prowadzacy_id) VALUES (?, ?, ?, ?)",
             (res.sala, res.data, res.godzina, res.user_id)

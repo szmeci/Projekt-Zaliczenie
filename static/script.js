@@ -82,22 +82,6 @@ async function addReservation() {
     }
 }
 
-// FUNKCJA WYPISYWANIA REZERWACJI ZALOGOWANEGO UŻYTKOWNIKA
-async function loadUserReservations() {
-    const response = await fetch(`${API}/moje-rezerwacje/${currentUser.id}`);
-    const data = await response.json();
-    const list = document.getElementById('res-list-user');
-    
-    list.innerHTML = data.map(res => 
-    `<li>
-        <strong>Sala ${res.sala}</strong><br>
-        Termin: ${res.data} o godz. ${res.godzina}
-        <button onclick="deleteReservation(${res.id})" style="background:red; color:white; float:right;">X</button>
-        <div style="clear:both;"></div>
-    </li>`
-    ).reverse().join('');
-}
-
 // FUNKCJA USUWANIA REZERWACJI
 async function deleteReservation(id) {
     if (confirm("Czy na pewno chcesz usunąć tę rezerwację?")) {
@@ -149,14 +133,24 @@ async function loadUserReservations() {
     const data = await response.json();
     const list = document.getElementById('res-list-user');
     
-    list.innerHTML = data.map(res => 
-    `<li>
-        <strong>Sala ${res.sala}</strong><br>
-        Termin: ${res.data} o godz. ${res.godzina}
-        <button onclick="deleteReservation(${res.id})" style="background:red; color:white; float:right;">X</button>
-        <div style="clear:both;"></div>
-    </li>`
-    ).reverse().join('');
+    list.innerHTML = data.map(res => {
+            const [h, m] = res.godzina.split(':').map(Number);
+            
+            const dateObj = new Date();
+            dateObj.setHours(h, m, 0);
+            dateObj.setMinutes(dateObj.getMinutes() + 90);
+            
+            const godzinaKonca = dateObj.toTimeString().slice(0, 5);
+
+            return `<li>
+                <div class="res-info">
+                    <strong>Sala ${res.sala}</strong><br>
+                    <span> ${res.data}</span><br>
+                    <span> ${res.godzina} — ${godzinaKonca} <small>(90 min)</small></span>
+                </div>
+                <button onclick="deleteReservation(${res.id})" class="delete-btn">×</button>
+            </li>`;
+        }).reverse().join('');
 }
 
 // FUNKCJA SPRAWDZANIA REZERWACJI Z FILTREM
@@ -172,10 +166,17 @@ async function loadFilteredReservations() {
     const reservations = await response.json();
     const list = document.getElementById('res-list-all');
     
-    list.innerHTML = reservations.map(res => 
-    `<li>
-        <strong>Sala ${res.sala}</strong> | ${res.data} [${res.godzina}]<br>
-        <small>Zarezerwował: ${res.kto}</small>
-    </li>`
-    ).join('');
+    list.innerHTML = reservations.map(res => {
+        const [h, m] = res.godzina.split(':');
+        const date = new Date();
+        date.setHours(h, m);
+        date.setMinutes(date.getMinutes() + 90);
+        const godzinaKonca = date.toTimeString().slice(0, 5);
+
+        return `<li>
+            <strong>Sala ${res.sala}</strong> | ${res.data}<br>
+            🕒 ${res.godzina} - ${godzinaKonca} (90 min)<br>
+            <small>Zarezerwował: ${res.kto}</small>
+        </li>`;
+    }).join('');
 }
